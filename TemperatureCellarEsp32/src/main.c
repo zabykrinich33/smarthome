@@ -14,19 +14,19 @@
 #include "rom/ets_sys.h"
 #include "sdkconfig.h"
 #include <esp_http_client.h>
+#include "esp_sntp.h"
+#include "esp_netif_sntp.h"
+#include <time.h> 
 
-
-
-const char *ssid = "Bahnhof-2.4G-HE4LXX";
-const char *pass = "MJE39JJA";
+const char *ssid = "HOME_Z";
+const char *pass = "Mm357911Tt";
 int retry_num=0;
 
-#define INFLUXDB_HOST "192.168.1.1"
+#define INFLUXDB_HOST "192.168.1.5"
 #define INFLUXDB_PORT "8086"
-#define INFLUXDB_USERNAME "influxuser"
-#define INFLUXDB_PASSWORD "influxpassword"
-#define INFLUXDB_DATABASE "database"
-
+#define INFLUXDB_USERNAME "home"
+#define INFLUXDB_PASSWORD "12345"
+#define INFLUXDB_DATABASE "home_temperature"
 
 static void wifi_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id,void *event_data){
 if(event_id == WIFI_EVENT_STA_START)
@@ -40,7 +40,8 @@ else if (event_id == WIFI_EVENT_STA_CONNECTED)
 else if (event_id == WIFI_EVENT_STA_DISCONNECTED)
 {
   printf("WiFi lost connection\n");
-  if(retry_num<5){esp_wifi_connect();retry_num++;printf("Retrying to Connect...\n");}
+  if(retry_num<20){esp_wifi_connect();retry_num++;printf("Retrying to Connect...\n");}
+  else abort();
 }
 else if (event_id == IP_EVENT_STA_GOT_IP)
 {
@@ -80,6 +81,8 @@ void wifi_connection()
     
 }
 
+
+
 esp_http_client_handle_t influxdb_setup(){
     esp_http_client_config_t config = {
        .url = "http://" INFLUXDB_HOST ":" INFLUXDB_PORT "/write?db=" INFLUXDB_DATABASE,
@@ -92,9 +95,9 @@ esp_http_client_handle_t influxdb_setup(){
     return client;
 }
 
-void send_influxdb_data(esp_http_client_handle_t client) {
+void send_influxdb_data(esp_http_client_handle_t client, float temp, float hum, const char* name) {
     char data[128];
-    snprintf(data, sizeof(data), "balcony_sensor temperature=%f,humidity=%f,co2=%u,pressure=%llu", 1.0, 1.0, 1, 1LL);
+    snprintf(data, sizeof(data), "%s temperature=%f,humidity=%f", name, temp, hum);
 
     esp_http_client_set_method(client, HTTP_METHOD_POST);
     esp_http_client_set_post_field(client, data, strlen(data));
@@ -102,16 +105,18 @@ void send_influxdb_data(esp_http_client_handle_t client) {
 
     if (err == ESP_OK)
     {
-        printf("Data sent to InfluxDB successfully");
+        printf("%s Data sent to InfluxDB successfully", name);
     }
     else
     {
-        printf("Error sending data to InfluxDB: %s", esp_err_to_name(err));
+        printf("Error sending %s data to InfluxDB: %s", name, esp_err_to_name(err));
     }
 }
 
 void DHT_read_task(void *pvParameter)
 {
+
+  esp_http_client_handle_t influx_client = influxdb_setup();
 
 	while(1) {
 
@@ -121,6 +126,8 @@ void DHT_read_task(void *pvParameter)
 	    int retPanna = readDHT();
 		
 	    errorHandler(retPanna);
+      
+      send_influxdb_data(influx_client, getTemperature(), getHumidity(), "panna");
 
 	    printf("Humidity panna %.2f %%\n", getHumidity());
 	    printf("Temperature panna %.2f degC\n\n", getTemperature());
@@ -134,6 +141,8 @@ void DHT_read_task(void *pvParameter)
 		
 	    errorHandler(retEl);
 
+      send_influxdb_data(influx_client, getTemperature(), getHumidity(), "el");
+
 	    printf("Humidity el %.2f %%\n", getHumidity());
 	    printf("Temperature el %.2f degC\n\n", getTemperature());
 		
@@ -145,6 +154,8 @@ void DHT_read_task(void *pvParameter)
 	    int retPorn = readDHT();
 		
 	    errorHandler(retPorn);
+
+      send_influxdb_data(influx_client, getTemperature(), getHumidity(), "porn");
 
 	    printf("Humidity porn %.2f %%\n", getHumidity());
 	    printf("Temperature porn %.2f degC\n\n", getTemperature());
@@ -158,11 +169,12 @@ void DHT_read_task(void *pvParameter)
 		
 	    errorHandler(retCold);
 
+      send_influxdb_data(influx_client, getTemperature(), getHumidity(), "cold");
+
 	    printf("Humidity cold %.2f %%\n", getHumidity());
 	    printf("Temperature cold %.2f degC\n\n", getTemperature());
 		
 	    vTaskDelay(2000 / portTICK_PERIOD_MS );
-
     }
 }
 
@@ -173,7 +185,13 @@ vTaskDelay(2000 / portTICK_PERIOD_MS );
 wifi_connection();
 vTaskDelay(2000 / portTICK_PERIOD_MS );
 
-xTaskCreate(&DHT_read_task, "DHT_read_task", 2048, NULL, 5, NULL );
+esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG("pool.ntp.org");
+esp_netif_sntp_init(&config);
+if (esp_netif_sntp_sync_wait(pdMS_TO_TICKS(10000)) != ESP_OK) {
+    printf("Failed to update system time within 10s timeout");
+}
+
+xTaskCreate(&DHT_read_task, "DHT_read_task", 4096, NULL, 5, NULL );
 //xTaskCreate(&DHT_el_task, "DHT_el_task", 2048, NULL, 5, NULL );
 //xTaskCreate(&DHT_porn_task, "DHT_porn_task", 2048, NULL, 5, NULL );
 //xTaskCreate(&DHT_cold_task, "DHT_cold_task", 2048, NULL, 5, NULL );

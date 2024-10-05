@@ -60,7 +60,7 @@ def read_temp_out():
 
 while True:
     
-    influx_db_client = InfluxDBClient('192.168.8.5', 8086, 'home', '12345', 'panna_temp_in_out')
+    influx_db_client = InfluxDBClient('192.168.1.5', 8086, 'home', '12345', 'panna_temp_in_out')
    
     try:
         temperature_in = read_temp_in()
