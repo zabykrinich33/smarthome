@@ -44,7 +44,7 @@ else if (event_id == WIFI_EVENT_STA_CONNECTED)
 else if (event_id == WIFI_EVENT_STA_DISCONNECTED)
 {
   printf("WiFi lost connection\n");
-  if(retry_num<100){esp_wifi_connect();retry_num++;printf("Retrying to Connect...\n");}
+  if(retry_num<20){esp_wifi_connect();retry_num++;printf("Retrying to Connect...\n");}
   else abort();
 }
 else if (event_id == IP_EVENT_STA_GOT_IP)

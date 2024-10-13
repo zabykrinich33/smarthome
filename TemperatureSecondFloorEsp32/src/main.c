@@ -126,57 +126,29 @@ void DHT_read_task(void *pvParameter)
 
     	setDHTgpio(GPIO_NUM_4);
 
-	    printf("DHT Panna Sensor Readings\n" );
-	    int retPanna = readDHT();
+	    printf("DHT storage Sensor Readings\n" );
+	    int retStorage = readDHT();
 		
-	    errorHandler(retPanna);
+	    errorHandler(retStorage);
       
-      send_influxdb_data(influx_client, getTemperature(), getHumidity(), "panna");
+      send_influxdb_data(influx_client, getTemperature(), getHumidity(), "storage");
 
-	    printf("Humidity panna %.2f %%\n", getHumidity());
-	    printf("Temperature panna %.2f degC\n\n", getTemperature());
-		
-	    vTaskDelay(2000 / portTICK_PERIOD_MS );
-
-    	setDHTgpio(GPIO_NUM_5);
-
-	    printf("DHT el Sensor Readings\n" );
-	    int retEl = readDHT();
-		
-	    errorHandler(retEl);
-
-      send_influxdb_data(influx_client, getTemperature(), getHumidity(), "el");
-
-	    printf("Humidity el %.2f %%\n", getHumidity());
-	    printf("Temperature el %.2f degC\n\n", getTemperature());
+	    printf("Humidity storage %.2f %%\n", getHumidity());
+	    printf("Temperature storage %.2f degC\n\n", getTemperature());
 		
 	    vTaskDelay(2000 / portTICK_PERIOD_MS );
 
     	setDHTgpio(GPIO_NUM_6);
 
-	    printf("DHT porn Sensor Readings\n" );
-	    int retPorn = readDHT();
+	    printf("DHT work Sensor Readings\n" );
+	    int retWork = readDHT();
 		
-	    errorHandler(retPorn);
+	    errorHandler(retWork);
 
-      send_influxdb_data(influx_client, getTemperature(), getHumidity(), "porn");
+      send_influxdb_data(influx_client, getTemperature(), getHumidity(), "work");
 
-	    printf("Humidity porn %.2f %%\n", getHumidity());
-	    printf("Temperature porn %.2f degC\n\n", getTemperature());
-		
-	    vTaskDelay(2000 / portTICK_PERIOD_MS );
-
-    	setDHTgpio(GPIO_NUM_7);
-
-	    printf("DHT cold Sensor Readings\n" );
-	    int retCold = readDHT();
-		
-	    errorHandler(retCold);
-
-      send_influxdb_data(influx_client, getTemperature(), getHumidity(), "cold");
-
-	    printf("Humidity cold %.2f %%\n", getHumidity());
-	    printf("Temperature cold %.2f degC\n\n", getTemperature());
+	    printf("Humidity work %.2f %%\n", getHumidity());
+	    printf("Temperature work %.2f degC\n\n", getTemperature());
 		
 	    vTaskDelay(2000 / portTICK_PERIOD_MS );
     }
