@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "esp_netif.h": "c",
+        "ds18b20_test.h": "c",
+        "freertos.h": "c"
+    }
+}
