@@ -178,7 +178,7 @@ void DHT_read_task(void *pvParameter)
 	    printf("Humidity cold %.2f %%\n", getHumidity());
 	    printf("Temperature cold %.2f degC\n\n", getTemperature());
 		
-	    vTaskDelay(2000 / portTICK_PERIOD_MS );
+	    vTaskDelay(60000 / portTICK_PERIOD_MS );
     }
 }
 

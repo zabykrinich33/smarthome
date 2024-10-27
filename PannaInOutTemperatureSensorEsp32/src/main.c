@@ -24,24 +24,24 @@
 
 #include "ds18b20.h"
 
-//const char *ssid = "HOME_Z";
-//const char *pass = "Mm357911Tt";
+const char *ssid = "HOME_Z";
+const char *pass = "Mm357911Tt";
 
-const char *ssid = "Bahnhof-2.4G-HE4LXX";
-const char *pass = "MJE39JJA";
+//const char *ssid = "Bahnhof-2.4G-HE4LXX";
+//const char *pass = "MJE39JJA";
 int retry_num=0;
 
-#define GPIO_DS18B20_0       (/*CONFIG_ONE_WIRE_GPIO*/GPIO_NUM_9)
+#define GPIO_DS18B20_0       (/*CONFIG_ONE_WIRE_GPIO*/GPIO_NUM_4)
 #define MAX_DEVICES          (8)
 #define DS18B20_RESOLUTION   (DS18B20_RESOLUTION_12_BIT)
 #define SAMPLE_PERIOD        (1000)   // milliseconds
 
-//#define INFLUXDB_HOST "192.168.1.5"
-#define INFLUXDB_HOST "192.168.1.2"
+#define INFLUXDB_HOST "192.168.1.5"
+//#define INFLUXDB_HOST "192.168.1.2"
 #define INFLUXDB_PORT "8086"
 #define INFLUXDB_USERNAME "home"
 #define INFLUXDB_PASSWORD "12345"
-#define INFLUXDB_DATABASE "home_temperature"
+#define INFLUXDB_DATABASE "panna_temp_in_out"
 
 // Temp Sensors are on GPIO26
 #define TEMP_BUS 4
@@ -257,13 +257,19 @@ void DS18B20_read_task(void *pvParameter)
 		printf("Temperatures: %0.1fF %0.1fF %0.1fF\n", temp1,temp2,temp3);
 		printf("Temperatures: %0.1fC %0.1fC %0.1fC\n", temp4,temp5,temp6);
 
-        send_influxdb_data(influx_client, temp4, "panna_temp_in");
-        send_influxdb_data(influx_client, temp5, "panna_temp_out");
-        send_influxdb_data(influx_client, temp6, "temp_street");
+        if (temp4 > -1 && temp4 < 60) {
+            send_influxdb_data(influx_client, temp4, "panna_temp_out");
+        }
+        if (temp5 > -1 && temp5 < 60) {
+            send_influxdb_data(influx_client, temp5, "panna_temp_in");
+        }
+        if (temp6 > -1 && temp6 < 60) {
+            send_influxdb_data(influx_client, temp6, "temp_street");
+        }
         
 		float cTemp = ds18b20_get_temp();
 		printf("Temperature: %0.1fC\n", cTemp);
-		vTaskDelay(30000 / portTICK_PERIOD_MS);
+		vTaskDelay(60000 / portTICK_PERIOD_MS);
 	}
 
 
